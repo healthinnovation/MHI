@@ -55,7 +55,7 @@ gg_barplot <- function(x,nrow = 1){
 } 
 
 # 2. Biscale color palette - customized -----------------------------------
-
+# source: Script modified of Bivariate Mapping with ggplot2 [Chris Prener et al.,2020]
 bi_pal2 <- function (pal, dim = 3, preview = TRUE) 
 {
   if (missing(pal) == TRUE) {

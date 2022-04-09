@@ -5,6 +5,7 @@ library(tidyverse)
 library(cowplot)
 library(sf)
 source("utils.R")
+
 # 2. Reading and processing data ------------------------------------------
 socio <- read_csv2("final.csv")
 dep <- st_read("Lima.gpkg")
