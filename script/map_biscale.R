@@ -7,12 +7,16 @@ library(sf)
 source("utils.R")
 
 # 2. Reading and processing data ------------------------------------------
-socio <- read_csv2("final.csv")
-dep <- st_read("Lima.gpkg")
-spatial <- st_read("SUHI-2017.gpkg")
-suhi <- left_join(spatial,socio,by = c("Mz"="ID")) %>% 
-  drop_na()
-
+socio <- read_csv("Lima_sociodemo_index_mhi.csv") %>% 
+  select(IDMANZANA,PC1,PC2,PC3,PC4,PC5,Index)
+dep <- st_read("GPKG/Lima.gpkg") %>% 
+  st_transform(crs = 4326)
+spatial <- st_read("GPKG/SUHI_18_11_2022.gpkg") %>% 
+  st_transform(4326)
+suhi <- left_join(spatial,socio,by = c("IDMANZANA")) %>% 
+  drop_na() %>% 
+  mutate(Index = -Index)
+data = suhi
 # 3. Bar plot by categories -----------------------------------------------
 data <- bi_class(
   data,
@@ -22,6 +26,7 @@ data <- bi_class(
   dim = 3
 )
 
+write_sf(data,"data.gpkg")
 newdata <- data %>%
   st_set_geometry(NULL) %>% 
   group_by(bi_class) %>% 
@@ -31,17 +36,19 @@ newdata <- data %>%
 ##> categories: 1-3 | 2-3 | 3-3 
 cat1 <- newdata %>% 
   filter(bi_class %in% sprintf("%s-3",1:3))
+
 b1 <- gg_barplot(x = cat1,nrow = 1)
 
 ##> categories: 1-2 | 2-2 | 3-2 
 cat2 <- newdata %>% 
   filter(bi_class %in% sprintf("%s-2",1:3))
-b2 <- gg_barplot(x = cat1,nrow = 2)
+b2 <- gg_barplot(x = cat2,nrow = 2)
 
 ##> categories: 1-1 | 2-1 | 3-1 
 cat3 <- newdata %>% 
   filter(bi_class %in% sprintf("%s-1",1:3))
-b3 <- gg_barplot(x = cat1,nrow = 3)
+b3 <- gg_barplot(x = cat3,nrow = 3) + 
+  ylim(c(0,14500))
 
 ##> Customization of bar plot
 plot <- plot_grid(b1, b2, b3, ncol = 1) 
@@ -61,7 +68,7 @@ barras <- plot +
     size = 7
     ) + 
   draw_plot_label(
-    label = "Number SUHI →",
+    label = "Number MHI →",
     x = 0.90,
     y = -0.1,
     angle = 90,
@@ -82,7 +89,7 @@ paleta <- bi_pal2(
     ) +
   labs(
     x = "Index → ",
-    y = "SUHI →"
+    y = "MHI →"
   )
 
 ##> Cooking maps
@@ -210,7 +217,7 @@ end <- ggdraw() +
 
 ##> Export final plot in a png format
 ggsave(
-  filename = "figure2.png",
+  filename = "MHI_biscalemap.png",
   plot = end,
   width = 14,
   height = 8,
