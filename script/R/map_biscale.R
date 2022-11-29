@@ -4,29 +4,34 @@ library(ggplot2)
 library(tidyverse)
 library(cowplot)
 library(sf)
-source("utils.R")
+source("script/R/utils.R")
 
 # 2. Reading and processing data ------------------------------------------
-socio <- read_csv("Lima_sociodemo_index_mhi.csv") %>% 
+socio <- read_csv("ouput/csv/lima_sociodemo_index_mhi.csv") %>% 
   select(IDMANZANA,PC1,PC2,PC3,PC4,PC5,Index)
-dep <- st_read("GPKG/Lima.gpkg") %>% 
-  st_transform(crs = 4326)
-spatial <- st_read("GPKG/SUHI_18_11_2022.gpkg") %>% 
+dep <- st_read(
+  "https://github.com/healthinnovation/sdb-gpkg/raw/main/Lima_provincia.gpkg"
+  ) %>% 
+  st_transform(crs = 4326) %>% 
+  group_by(FUENTE) %>% 
+  summarise()
+
+spatial <- st_read("ouput/gpkg/mhi_29_11_2022.gpkg") %>% 
   st_transform(4326)
-suhi <- left_join(spatial,socio,by = c("IDMANZANA")) %>% 
+
+data <- left_join(spatial,socio,by = c("IDMANZANA")) %>% 
   drop_na() %>% 
   mutate(Index = -Index)
-data = suhi
+
 # 3. Bar plot by categories -----------------------------------------------
 data <- bi_class(
   data,
   x = Index,
-  y = SUHI,
+  y = MHI,
   style = "quantile",
   dim = 3
 )
 
-write_sf(data,"data.gpkg")
 newdata <- data %>%
   st_set_geometry(NULL) %>% 
   group_by(bi_class) %>% 
@@ -217,7 +222,7 @@ end <- ggdraw() +
 
 ##> Export final plot in a png format
 ggsave(
-  filename = "MHI_biscalemap.png",
+  filename = "ouput/png/MHI_biscalemap.png",
   plot = end,
   width = 14,
   height = 8,
