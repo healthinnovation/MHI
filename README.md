@@ -26,4 +26,3 @@ Climate change constitutes an unprecedented challenge for public health and one 
     - data_managemen_pca.R - Data management and Principal Component Analysis.
     - map_biscale.R - Create biscalemap showed in Figure 5
     - mhi.R - MHI calculation process
-6. README.md
