@@ -30,7 +30,7 @@ puntanegra <- read_excel("Data/Punta negra.xlsx")
 rimac <- read_excel("Data/Rimac.xlsx")
 sanbartolo <- read_excel("Data/San bartolo.xlsx")
 sanborja <- read_excel("Data/San borja.xlsx")
-sanisidro <- read_excel("Data/San isidro.xlsx")
+sanisIDMANZANAro <- read_excel("Data/San isIDMANZANAro.xlsx")
 sanjuanlurigancho <- read_excel("Data/San juan lurigancho.xlsx")
 sanjuanmiraflores <- read_excel("Data/San juan miraflores.xlsx")
 sanluis <- read_excel("Data/San luis.xlsx")
@@ -45,18 +45,18 @@ villamariatriunfo <- read_excel("Data/Villa maria triunfo.xlsx")
 villasalvador <- read_excel("Data/Villa salvador.xlsx")
 
 library(dplyr)
-library(tidyverse)
+library(tIDMANZANAyverse)
 
 total <- bind_rows(ate, ancon, barranco, brena, callao, carabayllo, 
                     chaclacayo, chorrillos, cieneguilla, comas, elagustino, 
                     independencia, jesusmaria, lamolina, lavictoria, lima, 
                     lince, losolivos, lurigancho, lurin, magdalena, miraflores, 
                     pachacamac, pucusana, pueblolibre, puentepiedra, puntahermosa, 
-                    puntanegra, rimac, sanbartolo, sanborja, sanisidro, 
+                    puntanegra, rimac, sanbartolo, sanborja, sanisIDMANZANAro, 
                     sanjuanlurigancho, sanjuanmiraflores, sanluis, 
                     sanmartinporres, sanmiguel, santaanita, santamariamar, 
                     santarosa, santiagosurco, surquillo, villamariatriunfo, 
-                    villasalvador, .id = NULL)
+                    villasalvador, .IDMANZANA = NULL)
 
 total[is.na(total)] <- 0
 total$Total <- NULL
@@ -106,7 +106,7 @@ total$educacion <- (100/total$Total)*(total$`Superior no universitaria incomplet
                                       +total$`Superior universitaria completa`
                                       +total$`Maestría / Doctorado`)
 total$noeducacion <- (100/total$Total)*(total$`Sin Nivel`)
-total$escuela <- total$educacion
+total$escuela <- 100-total$educacion
 total$fuerzalab  <- (100/total$Total)*(total$`De 15 a más años`)
 total$nofuerzalab <- 100-total$fuerzalab
 total$remunerado <- (100/total$Total)*(total$`Si, trabajó por algún pago`)
@@ -154,7 +154,7 @@ ubicode <- function(x){
   }
 }
 
-base <- bd %>% mutate(ID=sapply(ID, ubicode))
+base <- bd %>% mutate(IDMANZANA=sapply(IDMANZANA, ubicode))
 
 library(sf)
 library(dplyr)
@@ -165,33 +165,47 @@ shape1 <- select(shp1, c("Mz", "INGR_PER", "CV_INGR")) ## seleccionar variables 
 
 shape1[is.na(shape1)] <- 0
 
-base1 <- merge(x = base, y = shape1, 
-               by.x = "ID", by.y = "Mz", )
-max(base1$INGR_PER)
-base1$ingreso <- ((base1$INGR_PER)/(5124.494))*100
-max(base1$CV_INGR)
-base1$consumo <- ((base1$CV_INGR)/(66.79871))*100
+df <- merge(x = base, y = shape1, 
+               by.x = "IDMANZANA", by.y = "Mz")
+max(df$INGR_PER)
+df$ingreso <- ((df$INGR_PER)/(5124.494))*100
+max(df$CV_INGR)
+df$consumo <- ((df$CV_INGR)/(66.79871))*100
 
-basepca <- base1 %>%
-  select(c("ID", "casa", "agua", "luz", "internet", "seguro", "leer", "educacion", "fuerzalab", "remunerado", "raza", "ingreso", "consumo"))
+basepca <- df %>%
+  select(c("IDMANZANA", "casa", "agua", "luz", "internet", "seguro", "leer", "educacion", "fuerzalab", "remunerado", "raza", "INGR_PER", "CV_INGR"))
 
-baseraza <- base1 %>%
-  select(c("ID", "blanco", "mestizo", "afro", "nativo"))
+baseraza <- df %>%
+  select(c("IDMANZANA", "blanco", "mestizo", "afro", "nativo"))
 
-baseingreso <- base1 %>%
-  select(c("ID", "INGR_PER", "CV_INGR"))
+baseingreso <- df %>%
+  select(c("IDMANZANA", "INGR_PER", "CV_INGR"))
 
 #######################################
 ###### PCA ############################
+basepca2 <- SUHI_Table %>%
+  select(c("IDMANZANAMANZANA", "casa", "agua", "luz", "internet", "seguro", "leer", "educacion", "fuerzalab", "remunerado", "raza", "Ingresos_mean"))
+
 
 library(textshape)
+library(FactoMineR)
+library(tIDMANZANAyverse)
+library(factoextra)
 
-pca <- textshape::column_to_rownames(basepca, loc = 1) #columnas ID como nombre
+pca <- textshape::column_to_rownames(basepca2, loc = 1) #columnas IDMANZANA como nombre
+colnames(data) <- c("Permanent adress", "Water service", "Elerctric energy service", 
+                    "Internet service", ">15 years and able to work",
+                    "PaIDMANZANA in the last 15 days", "Have a health insurance", "White or mestizo race",
+                    "Higher education", "Literacy", "Per capita income")
 
 library(stats)
-#prcomp() Forma rápida de implementar PCA sobre una matriz de datos.
-respca<-prcomp(pca, scale = F)
+library(FactoInvestigate)
 
+#prcomp() Forma rápIDMANZANAa de implementar PCA sobre una matriz de datos.
+respca<-prcomp(pca, scale = T)
+respca2 <- PCA(X = df1, scale = F, ncp = 11, graph = F)
+respca3 <- PCA(X = df1, scale = T, ncp = 11, graph = F)
+respca4 <- PCA(X = pca, scale = T, ncp = 11, graph = T)
 names(respca)
 
 head(respca$rotation)[, 1:5] #las coordenadas de los datos en el nuevo sistema rotado de coordenadas. 
@@ -216,189 +230,46 @@ pca$PC1<-xx$PC1
 pca$PC2<-xx$PC2
 pca$PC3<-xx$PC3
 pca$PC4<-xx$PC4
-pca$Index <- pca$PC1+pca$PC2+pca$PC3+pca$PC4
+pca$PC5<-xx$PC5
+
+pca$Index <- pca$PC1+pca$PC2+pca$PC3+pca$PC4+pca$PC5
 head(pca)
 cor(pca)
 
-############################################
-###########dicotomizar######################
-baseraza <- base1 %>%
-  select(c("blanco", "mestizo", "afro", "nativo", "ID"))
+index <- tibble::rownames_to_column(pca, "IDMANZANA")
+index <- select(index, c("IDMANZANA", "PC1", "PC2", "PC3", "PC4", "PC5", "Index"))
 
-dataraza <- baseraza %>% 
-  rowwise() %>%
-  mutate(row_max = names(.)[which.max(c_across(cols = c("blanco", "mestizo", "afro", "nativo")))])
-
-names(dataraza)[names(dataraza) == 'row_max'] <- "etnia"
-
-baseingreso <- base1 %>%
-  select(c("INGR_PER", "CV_INGR", "ID"))
-
-basecasa <- base1 %>%
-  select(c("casa", "nocasa", "ID"))
-
-datacasa <- basecasa %>% 
-  rowwise() %>%
-  mutate(row_max = names(.)[which.max(c_across(cols = c("casa", "nocasa")))])
-
-names(datacasa)[names(datacasa) == 'row_max'] <- "casacuali"
-
-baseagua <- base1 %>%
-  select(c("agua", "noagua", "ID"))
-
-dataagua <- baseagua %>% 
-  rowwise() %>%
-  mutate(row_max = names(.)[which.max(c_across(cols = c("agua", "noagua")))])
-
-names(dataagua)[names(dataagua) == 'row_max'] <- "aguacuali"
-
-baseluz <- base1 %>%
-  select(c("luz", "noluz", "ID"))
-
-dataluz <- baseluz %>% 
-  rowwise() %>%
-  mutate(row_max = names(.)[which.max(c_across(cols = c("luz", "noluz")))])
-
-names(dataluz)[names(dataluz) == 'row_max'] <- "luzcuali"
-
-baseinternet <- base1 %>%
-  select(c("internet", "nointernet", "ID"))
-
-datainternet <- baseinternet %>% 
-  rowwise() %>%
-  mutate(row_max = names(.)[which.max(c_across(cols = c("internet", "nointernet")))])
-
-names(datainternet)[names(datainternet) == 'row_max'] <- "internetcuali"
-
-baseseguro <- base1 %>%
-  select(c("seguro", "noseguro", "ID"))
-
-dataseguro <- baseseguro %>% 
-  rowwise() %>%
-  mutate(row_max = names(.)[which.max(c_across(cols = c("seguro", "noseguro")))])
-
-names(dataseguro)[names(dataseguro) == 'row_max'] <- "segurocuali"
-
-baseleer <- base1 %>%
-  select(c("leer", "noleer", "ID"))
-
-dataleer <- baseleer %>% 
-  rowwise() %>%
-  mutate(row_max = names(.)[which.max(c_across(cols = c("leer", "noleer")))])
-
-names(dataleer)[names(dataleer) == 'row_max'] <- "leercuali"
-
-baseeducacion <- base1 %>%
-  select(c("educacion", "noeducacion", "escuela", "ID"))
-
-dataeducacion <- baseeducacion %>% 
-  rowwise() %>%
-  mutate(row_max = names(.)[which.max(c_across(cols = c("educacion", "noeducacion", "escuela")))])
-
-names(dataeducacion)[names(dataeducacion) == 'row_max'] <- "educacioncuali"
-
-basefuerzalab <- base1 %>%
-  select(c("fuerzalab", "nofuerzalab", "ID"))
-
-datafuerzalab <- basefuerzalab %>% 
-  rowwise() %>%
-  mutate(row_max = names(.)[which.max(c_across(cols = c("fuerzalab", "nofuerzalab")))])
-
-names(datafuerzalab)[names(datafuerzalab) == 'row_max'] <- "fuerzalabcuali"
-
-baseremunerado <- base1 %>%
-  select(c("remunerado", "noremunerado", "ID"))
-
-dataremunerado <- baseremunerado %>% 
-  rowwise() %>%
-  mutate(row_max = names(.)[which.max(c_across(cols = c("remunerado", "noremunerado")))])
-
-names(dataremunerado)[names(dataremunerado) == 'row_max'] <- "remuneradocuali"
-
-basecasa <- base1 %>%
-  select(c("casa", "nocasa", "ID"))
-
-datacasa <- basecasa %>% 
-  rowwise() %>%
-  mutate(row_max = names(.)[which.max(c_across(cols = c("casa", "nocasa")))])
-
-names(datacasa)[names(datacasa) == 'row_max'] <- "casacuali"
-
-basef1 <- merge(x = datapca, y = dataraza, 
-                by.x = "ID", by.y = "ID", )
-
-basef2 <- merge(x = basef1, y = baseingreso, 
-                by.x = "ID", by.y = "ID", )
-
-basef3 <- merge(x = basef2, y = dataagua, 
-                by.x = "ID", by.y = "ID", )
-
-basef4 <- merge(x = basef3, y = datacasa, 
-                by.x = "ID", by.y = "ID", )
-
-basef5 <- merge(x = basef4, y = dataeducacion, 
-                by.x = "ID", by.y = "ID", )
-
-basef6 <- merge(x = basef5, y = datafuerzalab, 
-                by.x = "ID", by.y = "ID", )
-
-basef7 <- merge(x = basef6, y = datainternet, 
-                by.x = "ID", by.y = "ID", )
-
-basef8 <- merge(x = basef7, y = dataleer, 
-                by.x = "ID", by.y = "ID", )
-
-basef9 <- merge(x = basef8, y = dataluz, 
-                by.x = "ID", by.y = "ID", )
-
-basef10 <- merge(x = basef9, y = dataremunerado, 
-                by.x = "ID", by.y = "ID", )
-
-basef11 <- merge(x = basef10, y = dataseguro, 
-                by.x = "ID", by.y = "ID", )
-
-DATA <- basef11
-
-#####unir bases#####
-
-library(tibble)
-datapca <- tibble::rownames_to_column(pca, "ID")
-
-basef1 <- merge(x = datapca, y = dataraza, 
-               by.x = "ID", by.y = "ID", )
-
-basefinal <- merge(x = basef1, y = baseingreso, 
-                by.x = "ID", by.y = "ID", )
+df<- merge(x = index, y = SUHI_Table, 
+               by.x = "IDMANZANA", by.y = "IDMANZANAMANZANA")
 
 library(foreign)
-write.dta(DATA, "Datacuali.dta")
+write.csv(df, "df.csv")
 
-p1<-ggstatsplot::ggbetweenstats(
-  data = final,
-  x = etnia,
-  y = suhi,
-  plot.type = "boxviolin", # type of plot tambi?n se puede "box" o "violin"
-  notch = TRUE, # box plot cuadrado o ovalado (notch)
-  mean.ci = TRUE, # Intervalos de confianza para las medias
-  type = "np", #"p" (para parametrica), "np" (no parametrica), "r" (robusta), or "bf" (bayes factor)
-  effsize.type = "partial_omega",# hay "biased" (equivalente a la d cohen del t test), "partial_eta" (eta-squared para anova) o "unbiased" (equivalente a "g" Hedge's g para t-test, "partial_omega"(omega-squared para anova)
-  k = 2, # cu?ntos decimales?
-  pairwise.comparisons = TRUE, # Muestra las comparaciones post hoc
-  p.adjust.method = "bonferroni", # m?todo para utilizar las post hoc. esta: "holm", "hochberg", "hommel", "bonferroni", "BH", "BY", "fdr", "none"
-  pairwise.display = "s", # "s" solo te muestra las que son significativas, "ns" muestra no significativas, "all" pues todas ;)
-  outlier.tagging = TRUE, # mostrar outliers
-  outlier.coef = 1.5, # coeficiente para considerarlo outlier siguiendo la Tukey's rule
-  xlab = "", 
-  ylab = "SUHI",
-  title = "SUHI per ethnicity", # T?tulo del plot
-  ggtheme = ggthemes::theme_clean(), # cambiar el fondo del gr?fico
-  ggstatsplot.layer = FALSE, # turn off `ggstatsplot` theme layer
-  package = "wesanderson", # elegir el paquete asociado a la paleta de colores.
-  palette = "Darjeeling1", # cambiar la paleta
-  messages = FALSE,
-  max.overlaps = 50
+library(foreign)
+write.dta(data, "datos.dta")
+
+
+fig1 <- fviz_pca_var(respca, col.var="contrib",
+             gradient.cols = c("#fde725","#5ec962","#21918c","#3b528b","#440154"),
+             repel = TRUE, # AvoIDMANZANA text overlapping
+             title="")
+fig2 <- fviz_pca_var(respca2,
+             col.var = "contrib", # Color by contributions to the PC
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+             repel = TRUE,
+             title = ""
 )
-p1
+fig3 <- fviz_pca_var(respca3,
+                     col.var = "contrib", # Color by contributions to the PC
+                     gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+                     repel = TRUE,
+                     title = ""
+)
+fig4 <- fviz_pca_var(respca4,
+                     col.var = "contrib", # Color by contributions to the PC
+                     gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+                     repel = TRUE,
+                     title = ""
+)
 
-ggsave(p1,"grafico1.png", height = 5, width = 10)
-
+fviz_pca_var(respca2)
