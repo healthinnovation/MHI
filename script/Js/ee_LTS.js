@@ -1,126 +1,83 @@
-// Study area --------------------------------------------------------------------------------
-var geom = ee.Geometry.Polygon([[
+/*
+This script is based in the public code of Sean McCartney (sean.mccartney@nasa.gov)
+based in ARSET Training: Satellite Remote Sensing for Measuring Urban Heat Islands and Constructing Heat Vulnerability Indices
+August 2, 2022 - August 11, 2022
+*/
+
+// Define study area
+var aoi = ee.Geometry.Polygon([[
           [-77.39449018517418, -11.473924913677363],
           [-77.39449018517418, -12.56993498175432],
           [-76.42769331017418, -12.56993498175432],
           [-76.42769331017418, -11.473924913677363]
           ]], null, false);
-          
-var geometry = geom
-//cloud mask
-function maskL8sr(col) {
-  // Bits 3 and 5 are cloud shadow and cloud, respectively.
-  var cloudShadowBitMask = (1 << 3);
-  var cloudsBitMask = (1 << 5);
-  // Get the pixel QA band.
-  var qa = col.select('pixel_qa');
-  // Both flags should be set to zero, indicating clear conditions.
-  var mask = qa.bitwiseAnd(cloudShadowBitMask).eq(0)
-                 .and(qa.bitwiseAnd(cloudsBitMask).eq(0));
-  return col.updateMask(mask);
+
+// Set the basemap to display as satellite.
+Map.setOptions('SATELLITE');
+
+// Assign a variable to the sensor-specific bands unique to each Landsat mission.
+var LC08_bands = ['ST_B10', 'QA_PIXEL']; // Landsat 8 surface temperature (ST) & QA_Pixel bands
+
+
+//****************** CLOUD MASK FUNCTION *****************//
+// Create a function to mask clouds and cloud shadows based on the QA_PIXEL band of Landsat 8 & 9
+// For information on bit values for the QA_PIXEL band refer to: 
+// https://developers.google.com/earth-engine/datasets/catalog/LANDSAT_LC08_C02_T1_L2#bands
+function cloudMask(image) {
+  var qa = image.select('QA_PIXEL');
+  var mask = qa.bitwiseAnd(1 << 3)
+    .or(qa.bitwiseAnd(1 << 4));
+  return image.updateMask(mask.not());
 }
 
-//vis params
-var vizParams = {
-bands: ['B5', 'B6', 'B4'],
-min: 0,
-max: 4000,
-gamma: [1, 0.9, 1.1]
-};
+/* Assign variables to import the Landsat Collection 2, Tier 1, Level 2 image collections, selecting 
+the ST and QA_PIXEL bands, and spatially filtering the image collection by your aoi. */
+var L8 = ee.ImageCollection('LANDSAT/LC08/C02/T1_L2')
+  .select('ST_B10', 'QA_PIXEL')
+  .filterBounds(aoi)
+  .filterDate('2017-12-21','2021-03-23')
+  .filter(ee.Filter.calendarRange(2017,2021,'year'))
+  .filter(ee.Filter.calendarRange(12,3,'month'))
+  .map(cloudMask)
 
-var vizParams2 = {
-bands: ['B4', 'B3', 'B2'],
-min: 0,
-max: 3000,
-gamma: 1.4,
-};
+Map.addLayer(L8)
 
-//load the collection:
- {
-var col = ee.ImageCollection('LANDSAT/LC08/C01/T1_SR')
-.map(maskL8sr)
-.filterDate('2017-01-01','2021-12-31')
-.filterBounds(geometry);
-}
-print(col, 'coleccion');
+// Use print statements to print the argument to the console.
+print('Landsat 8 Collection: ', L8);
 
-//imagen reduction
-{
-var image = col.median();
-print(image, 'image');
-Map.addLayer(image, vizParams2);
+/* Create a funtion using Landsat scale factors for deriving ST in Kelvin and Celsius.
+For more information on ST scale factors, refer to:
+https://www.usgs.gov/landsat-missions/landsat-collection-2-level-2-science-products */
+function applyScaleFactors(image) {
+  var thermalBands = image.select('ST_B10').multiply(0.00341802).add(149.0) // Scale factors for Kelvin
+  .subtract(273.15); // Scale factor for degrees Celsius
+  return image.addBands(thermalBands, null, true);
 }
 
+// Define a variable to apply scale factors to the filtered image collection.
+var landsatST = L8.map(applyScaleFactors);
+// Use print statements to print the argument to the console.
+print('Landsat ST (Celsius): ',landsatST);
 
-//median
-{
-var ndvi = image.normalizedDifference(['B5', 
-'B4']).rename('NDVI');
-var ndviParams = {min: -1, max: 1, palette: ['blue', 'white', 
-'green']};
-print(ndvi,'ndvi');
-Map.addLayer(ndvi, ndviParams, 'ndvi');
-}
+//****************** CALCULATE MEAN SURFACE TEMPERATURE *****************//
+// Define a variable to calculate mean ST for each pixel geography 
+// throughout the filtered image collection.
+var mean_LandsatST = landsatST.median();
 
-//select thermal band 10(with brightness tempereature), no calculation 
-var thermal= image.select('B10').multiply(0.1);
-var b10Params = {min: 291.918, max: 302.382, palette: ['blue', 
-'white', 'green']};
-Map.addLayer(thermal, b10Params, 'thermal');
+// Define a variable to use the clip funtion to subset your imagery to the aoi.
+var clip_mean_ST = mean_LandsatST.clip(aoi);
+print(clip_mean_ST)
+// Add the image to the map window, defining min/max values, a palette for 
+// symbology, assign a name to the visualization, and display the result.
+Map.addLayer(clip_mean_ST, {
+  bands: "ST_B10", 
+  min: 28, max: 47, 
+  palette: ['blue','white','red']}, "ST", true);
 
-// find the min and max of NDVI
-{
-var min = ee.Number(ndvi.reduceRegion({
-  reducer: ee.Reducer.min(),
-  geometry: geometry,
-  scale: 200,
-  maxPixels: 1e12}).values().get(0));
-  print(min, 'min');
-var max = ee.Number(ndvi.reduceRegion({
-  reducer: ee.Reducer.max(),
-  geometry: geometry,
-  scale: 200,
-  maxPixels: 1e9}).values().get(0));
-  print(max, 'max')
-}
-
-//fractional vegetation
-{
-var fv =(ndvi.subtract(min).divide(max.subtract(min))).pow(ee.Number(2)).rename('FV'); 
-print(fv, 'fv');
-Map.addLayer(fv);
-}
-
-//Emissivity
-
-var a= ee.Number(0.004);
-var b= ee.Number(0.986);
-var EM=fv.multiply(a).add(b).rename('EMM');
-var imageVisParam3 = {min: 0.9865619146722164, max:0.989699971371314};
-Map.addLayer(EM, imageVisParam3,'EMM');
-
-//LST in Celsius Degree bring -273.15
-//NB: In Kelvin don't bring -273.15
-var LST = thermal.expression(
-'(Tb/(1 + (0.00115* (Tb / 1.438))*log(Ep)))-273.15', {
- 'Tb': thermal.select('B10'),
-'Ep': EM.select('EMM')
-}).rename('LST').clip(geometry);
-
-
-Map.addLayer(LST, {min: 20.569706944223423, max:29.328077233404645, palette: [
-'040274', '040281', '0502a3', '0502b8', '0502ce', '0502e6',
-'0602ff', '235cb1', '307ef3', '269db1', '30c8e2', '32d3ef',
-'3be285', '3ff38f', '86e26f', '3ae237', 'b5e22e', 'd6e21f',
-'fff705', 'ffd611', 'ffb613', 'ff8b13', 'ff6e08', 'ff500d',
-'ff0000', 'de0101', 'c21301', 'a71001', '911003'
- ]},'LST');
- 
 Export.image.toDrive({
-  image: LST,
-  description: 'LST_2021_mean',
-  region: geom,
+  image: clip_mean_ST.select("ST_B10"),
+  description: 'LST_summer',
+  region: aoi,
   scale:30,
-  crs: 'EPSG:32718'
+  crs:'EPSG:32718'
 });
- 
