@@ -1,0 +1,21 @@
+{
+ "label": "LST_2017_2021_C2_mean",
+ "date_start": "2017-01-01",
+ "date_end_exclusive": "2021-12-31",
+ "mask_bits": 24,
+ "reducer": "mean",
+ "n_l2": 334,
+ "n_toa": 334,
+ "n_joined": 334,
+ "n_joined_per_year": {
+  "2017": 68,
+  "2018": 69,
+  "2019": 67,
+  "2020": 63,
+  "2021": 67
+ },
+ "ndvi_min_aoi_200m": -0.6472827968155084,
+ "ndvi_max_aoi_200m": 0.9824704588197736,
+ "ee_api_version": "1.7.0",
+ "run_start_utc": "2026-11-10T01:40:01Z"
+}
