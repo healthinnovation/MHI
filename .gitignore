@@ -2,3 +2,6 @@
 .Rhistory
 .RData
 .Ruserdata
+tiles/
+ouput/png/mean_supplement/
+ouput/png/c2_composites/
