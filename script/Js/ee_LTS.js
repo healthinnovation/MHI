@@ -1,3 +1,11 @@
+// Summer script: Landsat 8 Collection 2 Level-2 surface temperature product (ST_B10), per-pixel median of the
+// months December to March between 2017-12-21 and 2021-03-22, exported as LST_summer.
+// It is not the script of the all-year composite raw_data/tiff/LST_2017_2021_mean.tif; that script is
+// script/Js/ee_LST_allyear_C01_original.js, and its LST algorithm is not used here.
+// The summer composites described in README.md come from the Collection 2 port of that script, not from this file.
+// In the output, pixels have no value where the surface temperature product has none because its emissivity
+// input is missing.
+
 /*
 This script is based in the public code of Sean McCartney (sean.mccartney@nasa.gov)
 based in ARSET Training: Satellite Remote Sensing for Measuring Urban Heat Islands and Constructing Heat Vulnerability Indices
