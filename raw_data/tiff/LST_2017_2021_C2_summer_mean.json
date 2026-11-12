@@ -1,0 +1,22 @@
+{
+ "label": "LST_2017_2021_C2_summer_mean",
+ "date_start": "2017-01-01",
+ "date_end_exclusive": "2022-01-01",
+ "mask_bits": 24,
+ "reducer": "mean",
+ "n_l2": 82,
+ "n_toa": 82,
+ "n_joined": 82,
+ "n_joined_per_year": {
+  "2017": 16,
+  "2018": 18,
+  "2019": 17,
+  "2020": 13,
+  "2021": 18
+ },
+ "ndvi_min_aoi_200m": -0.9849881485383236,
+ "ndvi_max_aoi_200m": 0.9974240082431797,
+ "ee_api_version": "1.7.0",
+ "run_start_utc": "2026-11-12T00:36:01Z",
+ "month_day": "12-21 to 03-21"
+}
