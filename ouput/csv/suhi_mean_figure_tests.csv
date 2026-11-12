@@ -1,0 +1,17 @@
+arm,figure,panel,grouping,test,statistic,p_value
+b_c2_median,3,A,etnia,Kruskal-Wallis,3007.8780895661466,0
+b_c2_median,3,B,casacuali,Mann-Whitney U,15120051.5,1.7517654809273302e-12
+b_c2_median,3,C,aguacuali,Mann-Whitney U,189878641.5,0
+b_c2_median,3,D,segurocuali,Mann-Whitney U,98289027.5,1.0945726012392085e-156
+b_c2_median,4,A,seguro,Kruskal-Wallis,2845.338353073081,0
+b_c2_median,4,B,educacion,Kruskal-Wallis,16300.672739714446,0
+b_c2_median,4,C,blanco,Kruskal-Wallis,3913.6725744847126,0
+b_c2_median,4,D,nativo,Kruskal-Wallis,8759.695170972149,0
+c_c2_mean,3,A,etnia,Kruskal-Wallis,3631.4122528558446,0
+c_c2_mean,3,B,casacuali,Mann-Whitney U,17703233,0.14461126942461583
+c_c2_mean,3,C,aguacuali,Mann-Whitney U,181452471.5,0
+c_c2_mean,3,D,segurocuali,Mann-Whitney U,100591714.5,6.322773100860176e-187
+c_c2_mean,4,A,seguro,Kruskal-Wallis,3394.5090430041478,0
+c_c2_mean,4,B,educacion,Kruskal-Wallis,16669.608121348734,0
+c_c2_mean,4,C,blanco,Kruskal-Wallis,4654.179597035331,0
+c_c2_mean,4,D,nativo,Kruskal-Wallis,10431.809637038312,0
